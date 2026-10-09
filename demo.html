@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Missed-Call Text-Back · Preview</title>
+<meta name="description" content="See what happens when a call to your business goes unanswered: the caller gets a text in seconds, and their reply comes to your phone.">
+<style>
+  :root {
+    --bg: #fbfaf7; --fg: #1d1d1b; --muted: #5d5d58; --line: #e4e1d9; --card: #ffffff;
+    --accent: #0f6b5c; --accent-soft: #e3f1ed;
+    --phone: #1b1c1a; --screen: #f4f3ef; --them: #e6e5e0; --them-fg: #1d1d1b; --me: #0f6b5c; --me-fg: #ffffff;
+    --sys: #7a7a74;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #151614; --fg: #ecebe6; --muted: #a3a29c; --line: #2c2e2a; --card: #1c1e1b;
+            --accent: #5cc4ae; --accent-soft: #1c2f2a;
+            --phone: #000; --screen: #1f211e; --them: #33352f; --them-fg: #ecebe6; --me: #2f8f7c; --me-fg: #fff; --sys: #9a9a93; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg);
+         font: 17px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  .wrap { max-width: 920px; margin: 0 auto; padding: 0 16px; }
+  header { padding: 40px 0 18px; text-align: center; }
+  .tag { color: var(--accent); font-weight: 600; font-size: 13px; letter-spacing: .05em; text-transform: uppercase; }
+  h1 { font-size: clamp(26px, 5vw, 38px); line-height: 1.15; margin: 8px 0 10px; letter-spacing: -.02em; }
+  .lead { color: var(--muted); max-width: 600px; margin: 0 auto; }
+  .controls { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin: 22px 0 8px; }
+  button { font: inherit; font-weight: 600; border-radius: 8px; padding: 10px 20px; cursor: pointer; border: 1px solid var(--accent); }
+  .play { background: var(--accent); color: var(--bg); }
+  .ghost { background: transparent; color: var(--accent); }
+  button:disabled { opacity: .5; cursor: default; }
+  .step { text-align: center; min-height: 52px; color: var(--muted); font-size: 15.5px; margin: 6px auto 14px; max-width: 560px;
+          position: sticky; top: 0; z-index: 2; background: var(--bg); padding: 8px 4px; }
+  .step strong { color: var(--fg); }
+  .phones { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 26px; justify-items: center; }
+  .who { text-align: center; font-weight: 600; margin-bottom: 8px; }
+  .who span { display: block; font-weight: 400; color: var(--muted); font-size: 14px; }
+  .phone { width: 300px; max-width: 100%; height: 560px; background: var(--phone); border-radius: 38px; padding: 12px;
+           box-shadow: 0 10px 30px rgba(0,0,0,.18); }
+  .screen { height: 100%; background: var(--screen); border-radius: 28px; overflow: hidden; display: flex; flex-direction: column; }
+  .bar { padding: 14px 16px 10px; border-bottom: 1px solid var(--line); text-align: center; font-size: 14px; }
+  .bar b { display: block; font-size: 15px; }
+  .bar small { color: var(--sys); }
+  .msgs { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 8px; scroll-behavior: smooth; }
+  .b { max-width: 82%; padding: 8px 12px; border-radius: 16px; font-size: 14.5px; line-height: 1.4; white-space: pre-wrap;
+       animation: pop .25s ease-out; }
+  .them { background: var(--them); color: var(--them-fg); align-self: flex-start; border-bottom-left-radius: 4px; }
+  .me { background: var(--me); color: var(--me-fg); align-self: flex-end; border-bottom-right-radius: 4px; }
+  .sys { align-self: center; color: var(--sys); font-size: 12.5px; text-align: center; animation: pop .25s ease-out; }
+  .call { align-self: stretch; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px;
+          text-align: center; font-size: 14px; animation: pop .25s ease-out; }
+  .call .ring { font-size: 22px; }
+  .typing { align-self: flex-end; color: var(--sys); font-size: 12.5px; }
+  @keyframes pop { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) { .b, .sys, .call { animation: none; } .msgs { scroll-behavior: auto; } }
+  section { padding: 34px 0; border-top: 1px solid var(--line); margin-top: 34px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
+  .card h3 { margin: 0 0 4px; font-size: 16.5px; }
+  .card p { margin: 0; color: var(--muted); font-size: 15px; }
+  .cta { text-align: center; }
+  .cta a.btn { display: inline-block; margin-top: 10px; background: var(--accent); color: var(--bg); text-decoration: none;
+               padding: 11px 20px; border-radius: 8px; font-weight: 600; }
+  .note { color: var(--muted); font-size: 13.5px; text-align: center; margin-top: 14px; }
+  footer { padding: 26px 0 44px; color: var(--muted); font-size: 14px; text-align: center; }
+  a { color: var(--accent); }
+</style>
+</head>
+<body>
+<header class="wrap">
+  <div class="tag">Preview · Missed-call text-back</div>
+  <h1>What happens when you miss a call at <span class="biz">your business</span></h1>
+  <p class="lead">You're on a job and can't pick up. Instead of calling the next company on Google, your caller gets a text in seconds, and their reply comes straight to your phone.</p>
+  <div class="controls">
+    <button class="play" id="play">▶ Play it</button>
+    <button class="ghost" id="reset" disabled>Start over</button>
+  </div>
+  <div class="step" id="step" aria-live="polite">Press play to see both phones: your customer's and yours.</div>
+</header>
+
+<main class="wrap">
+  <div class="phones">
+    <div>
+      <div class="who">Your customer<span>calling you from Google</span></div>
+      <div class="phone"><div class="screen">
+        <div class="bar"><b class="biz">Your Business</b><small id="biznum">(561) 555-0100</small></div>
+        <div class="msgs" id="cust"></div>
+      </div></div>
+    </div>
+    <div>
+      <div class="who">You<span>on a job, phone in your pocket</span></div>
+      <div class="phone"><div class="screen">
+        <div class="bar"><b>Text-back line</b><small>alerts and replies</small></div>
+        <div class="msgs" id="owner"></div>
+      </div></div>
+    </div>
+  </div>
+
+  <section>
+    <div class="grid">
+      <div class="card"><h3>Nothing new to learn</h3><p>It all happens by text on the phone you already carry. No app, no login.</p></div>
+      <div class="card"><h3>Your words</h3><p>The text says what you want it to say. You approve it before it goes live.</p></div>
+      <div class="card"><h3>Voicemail still works</h3><p>Callers can still leave a message, and you get a link to it by text.</p></div>
+      <div class="card"><h3>Your number stays yours</h3><p>Your phone only forwards the calls you don't answer. Calls you pick up ring like they always do.</p></div>
+    </div>
+  </section>
+
+  <section class="cta">
+    <h2 style="margin:0 0 6px">Want this for <span class="biz">your business</span>?</h2>
+    <p style="color:var(--muted);margin:0">Setup takes about 10 minutes of your time. I handle the rest.</p>
+    <a class="btn" href="mailto:aidanw.automations@gmail.com?subject=Missed-call%20text-back">Email Aidan</a>
+    <p class="note">This page is a preview of the real messages. Texting goes live once the phone carriers approve your business for texting, which is a standard registration that usually takes a few days to a few weeks. See <a href="./#pricing">pricing</a> and <a href="./#policies">policies</a>.</p>
+  </section>
+</main>
+
+<footer><a href="./">Aidan W. · Local Automations</a> · Boca Raton, Florida</footer>
+
+<script>
+  const q = new URLSearchParams(location.search);
+  const clean = (s, n) => (s || "").replace(/[<>]/g, "").trim().slice(0, n);
+  const name = clean(q.get("name"), 40) || "your business";
+  const Biz = clean(q.get("name"), 40) || "Your Business";
+  document.querySelectorAll(".biz").forEach((el, i) => { el.textContent = el.closest(".bar") ? Biz : name; });
+  if (q.get("name")) document.title = `${Biz} · Missed-call text-back preview`;
+
+  const TRADES = {
+    ac: ["Hi, my AC stopped blowing cold air. Can someone come out today?", "Yes! I can be there at 3 today. What's the address?"],
+    plumbing: ["Hi, there's water leaking under my kitchen sink. Can someone come today?", "Yes, I can be there by 2. Turn off the valve under the sink for now. What's the address?"],
+    electric: ["Hi, half the outlets in my house just stopped working. Can you take a look today?", "Sure, I can come by at 4. Check the breaker panel first. What's the address?"],
+    pool: ["Hi, my pool turned green this week. Do you do weekly service?", "We do! I can stop by tomorrow at 10 to take a look. What's the address?"],
+    roof: ["Hi, I have a leak in my ceiling after the storm. Can you look at the roof?", "Yes, I can come by this afternoon at 4. What's the address?"],
+    other: ["Hi, I'd like to get a quote. Are you available this week?", "Thanks for reaching out! I can come by tomorrow at 10. What's the address?"],
+  };
+  const [ask, answer] = TRADES[q.get("trade")] || TRADES.ac;
+  const caller = "(561) 555-0142";
+  // word for word what the real system sends (textback/call.js and sms.js)
+  const textback = `Hi, this is ${Biz}. Sorry we missed your call! What can we help you with? Reply here and we'll get right back to you. Reply STOP to opt out.`;
+
+  const cust = document.getElementById("cust"), owner = document.getElementById("owner"), step = document.getElementById("step");
+  const play = document.getElementById("play"), reset = document.getElementById("reset");
+  const add = (box, cls, text, html) => {
+    const el = document.createElement("div"); el.className = cls;
+    if (html) el.innerHTML = html; else el.textContent = text;
+    box.appendChild(el); box.scrollTop = box.scrollHeight; return el;
+  };
+  const say = (h) => { step.innerHTML = h; };
+  const fast = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let timers = [];
+  const SCRIPT = [
+    [0, () => { say("<strong>2:14 pm.</strong> A customer finds you on Google and calls. You're under a house on a job.");
+               add(cust, "call", "", `<div class="ring">📞</div>Calling <b>${Biz}</b>…`); }],
+    [2200, () => add(cust, "sys", "Ringing… no answer")],
+    [3600, () => { say("<strong>The call isn't answered.</strong> Instead of hitting a full voicemail, they hear a short message and can still leave one.");
+                  add(cust, "call", "", `🔊 <i>"Sorry we missed your call at ${Biz}. We just sent you a text, so you can reply there. Or leave a short message after the tone."</i>`); }],
+    [7600, () => { say("<strong>Within seconds</strong> they get a text from you, while they're still deciding who to call next.");
+                  add(cust, "sys", "Text Message · now"); add(cust, "b them", textback); }],
+    [9400, () => { say("<strong>You get a heads-up</strong> on your own phone, so nothing slips through.");
+                  add(owner, "sys", "now"); add(owner, "b them", `Missed call from ${caller}. They just got your text-back. Their replies come here.`); }],
+    [12400, () => { say("<strong>They reply</strong> and tell you what they need…"); add(cust, "b me", ask); }],
+    [14000, () => { say("…and <strong>it comes straight to your phone</strong>, with their number.");
+                   add(owner, "b them", `${caller}: ${ask}\n(Reply here to answer. Start with a number to text someone else.)`); }],
+    [17000, () => { say("<strong>When you have a second,</strong> you just text back. It goes to your customer from your business line.");
+                   add(owner, "b me", answer); }],
+    [18800, () => { add(cust, "b them", answer);
+                   say("<strong>Job booked.</strong> No phone tag, no lost lead to the next company on Google."); play.disabled = false; play.textContent = "▶ Play again"; }],
+  ];
+  function clear() { timers.forEach(clearTimeout); timers = []; cust.innerHTML = ""; owner.innerHTML = ""; }
+  play.addEventListener("click", () => {
+    clear(); play.disabled = true; reset.disabled = false;
+    SCRIPT.forEach(([t, fn]) => timers.push(setTimeout(fn, fast ? t / 4 : t)));
+  });
+  reset.addEventListener("click", () => {
+    clear(); play.disabled = false; play.textContent = "▶ Play it"; reset.disabled = true;
+    say("Press play to see both phones: your customer's and yours.");
+  });
+</script>
+</body>
+</html>
